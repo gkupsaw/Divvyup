@@ -3,9 +3,9 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 const bcrypt = require('bcryptjs');
-const MongoSchemas = require('./schemas.js');
-const User = MongoSchemas.User;
-const Party = MongoSchemas.Party;
+const schemas = require('./schemas.js');
+const User = schemas.User;
+const Party = schemas.Party;
 require('colors');
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -17,9 +17,12 @@ const authenticateUser = async (username, password) => {
     await User.findOne({ username })
         .select('password username id')
         .then((data) => {
-            const success = data && bcrypt.compareSync(password, data.password),
-                user = { username: data.username, id: data.id };
-            result = { user, success };
+            result = data
+                ? {
+                      user: { username: data.username, id: data.id },
+                      success: bcrypt.compareSync(password, data.password),
+                  }
+                : { user: null, success: false };
         })
         .catch((err) =>
             console.error('Error finding User doc for authentication'.red, err)
@@ -31,13 +34,13 @@ const registerUser = async (username, password) => {
     let result, user;
     await User.findOne({ username })
         .then(async (data) => {
-            user = data
-                ? null
-                : await MongoSchemas.createUser(username, password);
-            result = user
-                ? { user: { username: user.username, id: user.id } }
-                : null;
-            result && console.log('User registered!'.green);
+            if (!data) {
+                user = data
+                    ? null
+                    : await schemas.createUser(username, password);
+                result = { user: { username: user.username, id: user.id } };
+                console.log('User registered!'.green);
+            }
         })
         .catch((err) =>
             console.error('Error while registering user:'.red, err)

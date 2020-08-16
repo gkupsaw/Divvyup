@@ -18,12 +18,15 @@ module.exports = async () => {
         });
     });
     const url = process.env.DB_HOST;
-
-    await mongoose.connect(url, {
-        useNewUrlParser: true,
-        w: 1,
-        useUnifiedTopology: true,
-    });
+    await mongoose
+        .connect(url, {
+            useNewUrlParser: true,
+            w: 1,
+            useUnifiedTopology: true,
+        })
+        .catch((err) => {
+            console.error(`Error connecting to DB: ${JSON.stringify(err)}`);
+        });
 
     db.on('error', console.error);
 
